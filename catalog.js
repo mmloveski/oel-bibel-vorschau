@@ -45,7 +45,11 @@ function displayName(product) {
 }
 
 function sourceLabel(source) {
-  return source.book_pages?.length ? `Buchseite ${source.book_pages.join(', ')}` : 'Fundstelle in der Ölbibel';
+  const printed = source.book_pages?.length
+    ? `Gedruckte Buchseite${source.book_pages.length > 1 ? 'n' : ''} ${source.book_pages.join(', ')}`
+    : '';
+  const digital = source.reader_page != null ? `Digitale Buchseite ${source.reader_page}` : '';
+  return [printed, digital].filter(Boolean).join(' · ') || 'Fundstelle in der Ölbibel';
 }
 
 function sourceLink(source, label) {
