@@ -40,6 +40,10 @@ function element(tag, className, value) {
   return node;
 }
 
+function displayName(product) {
+  return shopById[product.id]?.display_name || product.name;
+}
+
 function sourceLabel(source) {
   return source.book_pages?.length ? `Buchseite ${source.book_pages.join(', ')}` : 'Fundstelle in der Ölbibel';
 }
@@ -114,7 +118,10 @@ function renderCard(product) {
     chips.append(chip);
   }
   top.append(chips);
-  content.append(top, element('h1', '', product.name));
+  content.append(top, element('h1', '', displayName(product)));
+  if (displayName(product) !== product.name) {
+    content.append(element('p', 'source-note', `In der Ölbibel: ${product.name}`));
+  }
 
   if (activeTopic) {
     const match = product.topicMatches.find(item => item.topic === activeTopic);
@@ -170,7 +177,7 @@ function renderRow(product) {
   photo.loading = 'lazy';
   photo.addEventListener('error', () => { photo.onerror = null; photo.src = placeholderImage; }, { once: true });
   const main = element('span', 'row-main');
-  main.append(element('strong', '', product.name));
+  main.append(element('strong', '', displayName(product)));
   const meta = element('span', 'row-meta');
   meta.append(element('span', 'type', product.type));
   const selected = [...product.topicMatches].sort((a, b) =>
@@ -241,7 +248,7 @@ function showRoute() {
     activeTopic = lastListHash.startsWith('#thema/') ? lastListHash.slice(7) : null;
     detailContent.replaceChildren(renderCard(product));
     detail.scrollIntoView();
-    document.title = `${product.name} · Finde dein Öl`;
+    document.title = `${displayName(product)} · Finde dein Öl`;
     return;
   }
   hero.hidden = true;
@@ -310,7 +317,7 @@ try {
       product.name, product.description, product.usage, product.areas, product.caution,
     ].join(' ')),
     searchText: normalized([
-      product.name, product.usage, product.areas,
+      product.name, shopById[product.id]?.name, product.usage, product.areas,
       ...(themeData.assignments[product.id] || []).map(match => topics.find(topic => topic.id === match.topic)?.title),
     ].join(' ')),
   }));
