@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ec">
+  <title>Öle entdecken · Vorschau</title>
+  <style>
+    :root { color-scheme:light; --paper:#f7f4ec; --ink:#233c31; --leaf:#335f47; }
+    * { box-sizing:border-box; }
+    body { min-height:100vh; display:grid; place-items:center; margin:0; padding:24px; background:radial-gradient(circle at 80% 20%,#e2e9d9 0,transparent 32%),radial-gradient(circle at 7% 95%,#eee5d2 0,transparent 38%),var(--paper); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { width:min(100%,440px); padding:35px; border:1px solid #dce3d8; border-radius:20px; background:#fffdf7; box-shadow:0 22px 55px #324c3514; }
+    .mark { width:42px; height:42px; display:grid; place-items:center; border-radius:50%; background:var(--leaf); color:white; font-size:1.5rem; }
+    h1 { margin:22px 0 9px; font:normal 2.4rem Georgia,serif; letter-spacing:-.04em; }
+    p { margin:0 0 25px; color:#617167; line-height:1.5; }
+    label { display:block; margin-bottom:7px; font-size:.86rem; font-weight:700; }
+    input { width:100%; height:52px; padding:0 14px; border:1px solid #becdbd; border-radius:10px; background:white; font:inherit; }
+    input:focus { outline:3px solid #335f4733; border-color:var(--leaf); }
+    button { width:100%; min-height:49px; margin-top:13px; border:0; border-radius:10px; background:var(--leaf); color:white; font-family:inherit; font-size:1rem; font-weight:700; cursor:pointer; }
+    button:disabled { opacity:.65; cursor:wait; }
+    #status { min-height:1.5em; margin:13px 0 0; font-size:.86rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="mark" aria-hidden="true">✺</span>
+    <h1>Öle entdecken</h1>
+    <p>Geschützte Vorschau der digitalen Öl-Übersicht.</p>
+    <form id="unlock-form">
+      <label for="password">Passwort</label>
+      <input id="password" type="password" autocomplete="current-password" required autofocus>
+      <button id="unlock-button" type="submit">Vorschau öffnen</button>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+  <script type="module" src="gate.js"></script>
+</body>
+</html>
