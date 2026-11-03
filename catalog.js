@@ -19,6 +19,7 @@ const placeholderImage = protectedData?.placeholder || 'produktbild-platzhalter.
 let oils = [];
 let topics = [];
 let imageById = {};
+let shopById = {};
 let activeTopic = null;
 let activeFilter = 'Alle';
 let shown = 40;
@@ -40,14 +41,12 @@ function element(tag, className, value) {
 }
 
 function sourceLabel(source) {
-  const book = source.book_pages.length ? `Buchseite ${source.book_pages.join(', ')}` : '';
-  const pdf = source.pdf_pages.length ? `PDF ${source.pdf_pages.join(', ')}` : '';
-  return [book, pdf, `digitale Seite ${source.reader_page}`].filter(Boolean).join(' · ');
+  return source.book_pages?.length ? `Buchseite ${source.book_pages.join(', ')}` : 'Fundstelle in der Ölbibel';
 }
 
 function sourceLink(source, label) {
   if (protectedData?.publicPreview) {
-    return element('span', 'source-link', label || sourceLabel(source));
+    return element('span', 'source-link', (label || sourceLabel(source)).replace(' öffnen', ''));
   }
   const link = element('a', 'source-link', label || sourceLabel(source));
   link.href = source.reader_url;
@@ -92,7 +91,7 @@ function renderCard(product) {
   const caption = element('figcaption');
   if (shopImage) {
     const link = element('a', '', `Produktfoto: Young Living ${shopImage.market}`);
-    link.href = shopImage.product_url;
+    link.href = shopById[product.id]?.url || shopImage.product_url;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     caption.append(link);
@@ -222,13 +221,13 @@ function render() {
 
 function showRoute() {
   const route = decodeURIComponent(location.hash.slice(1));
-  if (!oils.length || (!route.startsWith('thema/') && route !== 'oele' && !route.startsWith('suche/') && !route.startsWith('oel/'))) {
+  if (!oils.length || (!route.startsWith('thema/') && !route.startsWith('oele') && !route.startsWith('suche/') && !route.startsWith('oel/'))) {
     hero.hidden = false;
     home.hidden = false;
     browse.hidden = true;
     detail.hidden = true;
     activeTopic = null;
-    document.title = 'Öle entdecken · Ölbibel Arbeitsfassung';
+    document.title = 'Finde dein Öl · Ölbibel Arbeitsfassung';
     window.scrollTo(0, 0);
     return;
   }
@@ -242,7 +241,7 @@ function showRoute() {
     activeTopic = lastListHash.startsWith('#thema/') ? lastListHash.slice(7) : null;
     detailContent.replaceChildren(renderCard(product));
     detail.scrollIntoView();
-    document.title = `${product.name} · Öle entdecken`;
+    document.title = `${product.name} · Finde dein Öl`;
     return;
   }
   hero.hidden = true;
@@ -252,18 +251,18 @@ function showRoute() {
   activeTopic = route.startsWith('thema/') ? route.slice(6) : null;
   const topic = topics.find(item => item.id === activeTopic);
   if (activeTopic && !topic) { location.hash = 'start'; return; }
-  browseTitle.textContent = topic ? topic.title : route.startsWith('suche/') ? 'Suchergebnisse' : 'Alle Öle';
+  browseTitle.textContent = topic ? topic.title : route.startsWith('suche/') ? 'Suchergebnisse' : route === 'oele/einzel' ? 'Einzelöle' : route === 'oele/mischungen' ? 'Ölmischungen' : 'Alle Öle';
   browseContext.textContent = topic
     ? 'Wähle ein Öl für Beschreibung, Anwendung und den konkreten Buchbeleg zum Thema.'
     : 'Wähle ein Öl, um die vollständigen Buchtexte und Quellen zu öffnen.';
   search.value = restoreListState ? lastListQuery : route.startsWith('suche/') ? route.slice(6) : '';
-  activeFilter = restoreListState ? lastListFilter : 'Alle';
+  activeFilter = restoreListState ? lastListFilter : route === 'oele/einzel' ? 'Einzelöl' : route === 'oele/mischungen' ? 'Mischung' : 'Alle';
   restoreListState = false;
   buttons.forEach(item => item.setAttribute('aria-pressed', String(item.dataset.filter === activeFilter)));
   shown = 40;
   render();
   browse.scrollIntoView();
-  document.title = `${browseTitle.textContent} · Öle entdecken`;
+  document.title = `${browseTitle.textContent} · Finde dein Öl`;
 }
 
 buttons.forEach(button => button.addEventListener('click', () => {
@@ -293,26 +292,29 @@ try {
     catalog = protectedData.catalog;
     themeData = protectedData.themes;
     imageById = protectedData.images;
+    shopById = protectedData.shop.matched_products;
   } else {
-    const [catalogResponse, topicsResponse, imagesResponse] = await Promise.all([
-      fetch('oele-aus-buch.json'), fetch('themen-aus-buch.json'), fetch('shop-bilder.json'),
+    const [catalogResponse, topicsResponse, imagesResponse, shopResponse] = await Promise.all([
+      fetch('oele-aus-buch.json'), fetch('themen-aus-buch.json'), fetch('shop-bilder.json'), fetch('de-shop-abgleich.json'),
     ]);
-    if (!catalogResponse.ok || !topicsResponse.ok) throw new Error(`HTTP ${catalogResponse.status}/${topicsResponse.status}`);
+    if (!catalogResponse.ok || !topicsResponse.ok || !shopResponse.ok) throw new Error(`HTTP ${catalogResponse.status}/${topicsResponse.status}/${shopResponse.status}`);
     [catalog, themeData] = await Promise.all([catalogResponse.json(), topicsResponse.json()]);
     imageById = imagesResponse.ok ? (await imagesResponse.json()).images : {};
+    shopById = (await shopResponse.json()).matched_products;
   }
   topics = themeData.topics;
-  oils = catalog.products.map(product => ({
+  oils = catalog.products.filter(product => Boolean(shopById[product.id])).map(product => ({
     ...product,
     topicMatches: themeData.assignments[product.id] || [],
     directSearchText: normalized([
       product.name, product.description, product.usage, product.areas, product.caution,
     ].join(' ')),
     searchText: normalized([
-      product.name, product.description, product.usage, product.areas, product.caution,
-      ...product.mentions.map(mention => mention.excerpt),
+      product.name, product.usage, product.areas,
+      ...(themeData.assignments[product.id] || []).map(match => topics.find(topic => topic.id === match.topic)?.title),
     ].join(' ')),
   }));
+  topics = topics.map(topic => ({...topic, count: oils.filter(oil => oil.topicMatches.some(match => match.topic === topic.id)).length}));
   renderGroups(themeData.groups);
   showRoute();
 } catch (error) {

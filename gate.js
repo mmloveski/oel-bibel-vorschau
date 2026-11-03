@@ -54,12 +54,13 @@ async function unlock(password) {
     catalog: payload.catalog,
     themes: payload.themes,
     images: imageMap,
+    shop: payload.shop,
     placeholder: urls['produktbild-platzhalter.svg'],
     publicPreview: true,
   };
   const page = new DOMParser().parseFromString(payload.html, 'text/html');
   page.querySelector('script[src="catalog.js"]')?.remove();
-  page.querySelector('.hero-product').src = urls['young-living-lavendel-32034.jpg'];
+  page.querySelector('.hero-product').src = urls['produktbilder/0e04ce56271adf00.png'];
   document.head.replaceChildren(...[...page.head.childNodes].map(node => document.importNode(node, true)));
   document.body.replaceChildren(...[...page.body.childNodes].map(node => document.importNode(node, true)));
   await import('./catalog.js');
