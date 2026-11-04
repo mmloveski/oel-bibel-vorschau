@@ -238,7 +238,7 @@ function showRoute() {
     browse.hidden = true;
     detail.hidden = true;
     activeTopic = null;
-    document.title = 'Finde dein Öl · Ölbibel Arbeitsfassung';
+    document.title = 'Ölübersicht · Arbeitsfassung';
     window.scrollTo(0, 0);
     return;
   }
@@ -252,7 +252,7 @@ function showRoute() {
     activeTopic = lastListHash.startsWith('#thema/') ? lastListHash.slice(7) : null;
     detailContent.replaceChildren(renderCard(product));
     detail.scrollIntoView();
-    document.title = `${displayName(product)} · Finde dein Öl`;
+    document.title = `${displayName(product)} · Ölübersicht`;
     return;
   }
   hero.hidden = true;
@@ -273,7 +273,7 @@ function showRoute() {
   shown = 40;
   render();
   browse.scrollIntoView();
-  document.title = `${browseTitle.textContent} · Finde dein Öl`;
+  document.title = `${browseTitle.textContent} · Ölübersicht`;
 }
 
 buttons.forEach(button => button.addEventListener('click', () => {
